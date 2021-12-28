@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="https://code.jquery.com/jquery-3.5.0.js"></script>
+    <title>Try it!</title>
+</head>
+
+<body>
+    <div class="outline">
+        <h1>Try to send a SMS message</h1>
+        <input type="text" id="Body" name="Body" placeholder="Type something...">
+        <br>
+        <input type="submit" id="submit" value="Send">
+    </div>
+    <div id="result" class="outline" style="display: none;">
+        <h1>Response</h1>
+        <div id="showResult"></div>
+    </div>
+</body>
+
+</html>
+
+<script>
+    $('#submit').click(function() {
+        $.ajax({
+            url: "http://127.0.0.1:8787/sms",
+            data: {
+                Body: $('#Body').val()
+            },
+            type: "POST",
+            dataType: "html",
+            success: function(data) {
+                $("#result").show();
+                $("#showResult").html(data.replace(/[\n]/g, '<br><br>'));
+            },
+            error: function(xhr, status) {
+                alert("Sorry, there was a problem!");
+            }
+        });
+    });
+</script>
