@@ -9,6 +9,11 @@ var __dirname = 'views';
 const switchMap = { "of:0000000000000001": "s1", "of:0000000000000002": "s2", "of:0000000000000003": "s3", "of:0000000000000004": "s4", "of:0000000000000005": "s5", "of:0000000000000006": "s6", "of:0000000000000007": "s7", "of:0000000000000008": "s8", "of:0000000000000009": "s9" };
 const mapSwitch = { "s1": "of:0000000000000001", "s2": "of:0000000000000002", "s3": "of:0000000000000003", "s4": "of:0000000000000004", "s5": "of:0000000000000005", "s6": "of:0000000000000006", "s7": "of:0000000000000007", "s8": "of:0000000000000008", "s9": "of:0000000000000009" };
 const detail = require('./detail.json');
+const accountSid = detail.ACCOUNT_SID;
+const authToken = detail.AUTH_TOKEN;
+const twilio = require('twilio');
+const client = new twilio(accountSid, authToken);
+
 var currDeviceFlow = {},
     prevDeviceFlow = {};
 
@@ -24,25 +29,51 @@ app.post('/sms', (req, res) => {
 
 async function checkContent(contents, res, twiml) {
     console.log(contents);
+    var SMS_reply_body;
     if (contents == "show") {
-        showAllDevice(res);
+        SMS_reply_body = showAllDevice();
     } else if (contents in mapSwitch) {
-        sendDeviceFlow(res, mapSwitch[contents]);
+        SMS_reply_body = sendDeviceFlow(mapSwitch[contents]);
     } else if (contents.indexOf("drop") > -1) {
         var [ACTION, SRC_IP, DST_IP, DEVICE_ID] = contents.split(" ");
         await ruleChange(SRC_IP, DST_IP, ACTION, DEVICE_ID);
-        await res.end("Flow dropped!");
+        SMS_reply_body = "Flow dropped!";
     } else if (contents.indexOf("add") > -1) {
         var [ACTION, SRC_IP, DST_IP, OUT_PORT, DEVICE_ID] = contents.split(" ");
         await ruleChange(SRC_IP, DST_IP, OUT_PORT, DEVICE_ID);
-        await res.end("Flow add!");
+        SMS_reply_body = "Flow add!";
     } else {
-        twiml.message("Usage error!");
-        res.end(twiml.toString());
+        SMS_reply_body = "Usage error!";
     }
+    res.send(SMS_reply_body);
+    // sendSMS(SMS_reply_body);
 }
 
-function sendDeviceFlow(res, device) {
+function sendSMS(SMS_reply_body) {
+    client.messages
+        .create({
+            body: SMS_reply_body,
+            to: detail.MY_NUMBER, // Text this number
+            from: detail.TRIAL_NUMBER, // From a valid Twilio number
+        })
+        .then((message) => console.log(message.sid));
+    return Promise.resolve("hello");
+}
+
+function showAllDevice() {
+    if (Object.keys(prevDeviceFlow).length) {
+        var deviceData = "";
+        for (const [key, value] of Object.entries(currDeviceFlow)) {
+            deviceData += (switchMap[key] + ": " + Math.max(0, value.bytes - prevDeviceFlow[key].bytes) + " bytes\n");
+        }
+        return deviceData;
+    } else {
+        return "not yet";
+    }
+    // return Promise.resolve("hello");
+}
+
+function sendDeviceFlow(device) {
     if (Object.keys(currDeviceFlow).length) {
         var deviceData = "";
         deviceData += (switchMap[device] + ":\n");
@@ -52,22 +83,11 @@ function sendDeviceFlow(res, device) {
                 ", DST_IP: " + flows[i].DST_IP.split('/')[0] +
                 ", bytes: " + (flows[i].BYTES - prevDeviceFlow[device].flows[i].BYTES) + "\n";
         }
-        res.send(deviceData);
+        return deviceData;
     } else {
-        res.send("not yet");
+        return "not yet";
     }
-}
-
-function showAllDevice(res) {
-    if (Object.keys(prevDeviceFlow).length) {
-        var deviceData = "";
-        for (const [key, value] of Object.entries(currDeviceFlow)) {
-            deviceData += (switchMap[key] + ": " + Math.max(0, value.bytes - prevDeviceFlow[key].bytes) + " bytes\n");
-        }
-        res.send(deviceData);
-    } else {
-        res.send("not yet");
-    }
+    // return Promise.resolve("hello");
 }
 
 function ruleChange(SRC_IP, DST_IP, ACTION, DEVICE_ID) {
@@ -97,9 +117,10 @@ function updateCurr() {
     axios(config)
         .then(function(response) {
             var flows = response.data.flows;
-            var flowNum = flows.length;
-            for (var i = 0; i < flowNum; i++) {
+            // var flowNum = flows.length;
+            for (var i = 0; i < flows.length; i++) {
                 if (flows[i].selector.criteria[0].ethType != "0x800") continue;
+                // if (flows[i].appId != "org.onosproject.rest") { console.log(flows[i].appId); continue; }
                 perFlow = {
                     "FLOW_ID": flows[i].id,
                     "SRC_IP": flows[i].selector.criteria[1].ip,
