@@ -2,4 +2,4 @@ test*
 detail.json
 *.sh
 rules/
-files/
+files/add_rule.sh
