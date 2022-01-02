@@ -53,14 +53,15 @@ function sendSMS(SMS_reply_body) {
     client.messages
         .create({
             body: SMS_reply_body,
-            to: detail.MY_NUMBER, // Text this number
-            from: detail.TRIAL_NUMBER, // From a valid Twilio number
+            to: detail.MY_NUMBER,
+            from: detail.TRIAL_NUMBER,
         })
         .then((message) => console.log(message.sid));
     return Promise.resolve("hello");
 }
 
 function showAllDevice() {
+    console.log(currDeviceFlow);
     if (Object.keys(prevDeviceFlow).length) {
         var deviceData = "";
         for (const [key, value] of Object.entries(currDeviceFlow)) {

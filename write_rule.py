@@ -23,6 +23,10 @@ with open("files/template.json") as f:
     
     with open('files/rule.json', 'w') as outfile:
         json.dump(data, outfile, indent=4)
+    
+    # file_name = "files/s%s_h%s_h%s.json" % (deviceId, src_ip[-1], dst_ip[-1])
+    # with open(file_name, 'w') as outfile:
+    #     json.dump(data, outfile, indent=4)
 
 command = "sh files/add_rule.sh %d" % (int(deviceId))
 subprocess.run(command, shell=True)

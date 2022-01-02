@@ -2,8 +2,15 @@
     "priority": 60000,
     "timeout": 0,
     "isPermanent": true,
-    "deviceId": "of:0000000000000002",
-    "treatment": {},
+    "deviceId": "of:0000000000000001",
+    "treatment": {
+        "instructions": [
+            {
+                "type": "OUTPUT",
+                "port": "3"
+            }
+        ]
+    },
     "selector": {
         "criteria": [
             {
@@ -12,11 +19,11 @@
             },
             {
                 "type": "IPV4_SRC",
-                "ip": "10.0.0.3/32"
+                "ip": "10.0.0.2/32"
             },
             {
                 "type": "IPV4_DST",
-                "ip": "10.0.0.7/32"
+                "ip": "10.0.0.5/32"
             }
         ]
     }

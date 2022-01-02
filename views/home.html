@@ -33,11 +33,41 @@
             dataType: "html",
             success: function(data) {
                 $("#result").show();
-                $("#showResult").html(data.replace(/[\n]/g, '<br><br>'));
+                placeData(data);
             },
             error: function(xhr, status) {
                 alert("Sorry, there was a problem!");
             }
         });
     });
+
+    function placeData(data) {
+        // individual device
+        if (data[4] == 'S') {
+            var data_splited = data.split(/\s+/);
+            var content = "<center><table><th>SRC_IP</th><th>DST_IP</th><th>Bytes</th>"
+            for (var i = 2; i < data_splited.length; i += 2) {
+                if (i % 3 === 2) content += "<tr><td>" + data_splited[i].replace(',', '') + "</td>";
+                else if (i % 3 === 1) content += "<td>" + data_splited[i].replace(',', '') + "</td>";
+                else content += "<td>" + data_splited[i].replace(',', '') + "</td>";
+            }
+            content += "</table></center>";
+            $("#showResult").html(content);
+        }
+
+        // show
+        else if (data[0] == 's') {
+            var data_splited = data.split(/\s+/);
+            var content = "<center><table><th>Device_ID</th><th>Bytes</th>"
+            for (var i = 0; i < data_splited.length - 1; i++) {
+                if (i % 3 === 0) content += "<tr><td>" + data_splited[i].replace(':', '') + "</td>";
+                else if (i % 3 === 1) content += "<td>" + data_splited[i].replace(':', '') + "</td>";
+            }
+            content += "</table></center>";
+            $("#showResult").html(content);
+        }
+
+        // others
+        else $("#showResult").html(data);
+    }
 </script>
